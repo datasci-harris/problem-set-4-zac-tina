@@ -1,5 +1,6 @@
 ---
-title: "Your Title"
+title: "Problem Set 4"
+author: Zijing Zhao & Zac(Zekai) Shen
 format: 
   pdf:
     keep-tex: true
@@ -22,53 +23,274 @@ include-before-body:
 ## Style Points (10 pts)
 
 ## Submission Steps (10 pts)
+Partner 1 (name and cnet ID): Zijing Zhao (zijingz)
+Partner 2 (name and cnet ID): Zac Shen ()
+
+“This submission is our work alone and complies with the 30538 integrity policy.” Add your initials to indicate your agreement: Zijing Zhao, Zac Shen
+
+Late coins used this pset: 1 Late coins left after submission: 2
+
+
 
 ## Download and explore the Provider of Services (POS) file (10 pts)
 
-1. 
-2. 
-    a.
-    b.
-3. 
-4. 
-    a.
-    b.
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+import geopandas as gpd
+```
+
+1. Download this for 2016 and call it pos2016.csv. What are the variables you pulled?
+The Variables that we pulled:
+PRVDR_CTGRY_SBTYP_CD - Provider Category Subtype Code
+PRVDR_CTGRY_CD - Provider Category Code
+SSA_CNTY_CD - SSA County Code
+CRTFCTN_DT - Certification Date
+FAC_NAME - Facility Name
+PRVDR_NUM - CMS Certification Number
+RGN_CD - Region Code
+STATE_CD - State Abbreviation
+ST_ADR - Street Address
+PGM_TRMNTN_CD - Termination Code
+GNRL_CNTL_TYPE_CD - General Control Type Code
+ZIP_CD - ZIP Code
+
+2. Import your pos2016.csv file. We want to focus on short-term hospitals. These are identified as facilities with provider type code 01 and subtype code 01. Subset your data to these facilities.
+    a.How many hospitals are reported in this data? Does this number make sense?
+    b.Cross-reference with other sources and cite the number you compared it to. If it differs, why do you think it could differ?
+
+```{python}
+pos_2016 = pd.read_csv("/Users/zhaozijing/Documents/GitHub/problem-set-4-zac-tina/pos2016.csv")
+
+# Filter the data for short-term hospitals (provider type code 01 and subtype code 01)
+short_term_2016 = pos_2016[(pos_2016['PRVDR_CTGRY_CD'] == 1) & (pos_2016['PRVDR_CTGRY_SBTYP_CD'] == 1)]
+
+# Count the number of short-term hospitals
+num_short_term_hospitals_2016 = short_term_2016.shape[0]
+print(num_short_term_hospitals_2016)
+```
+
+This dataset reports a total of 7,245 short-term hospitals. We referred to the 4,840 community hospitals reported by the American Hospital Association (AHA) for 2016. (website: https://www.aha.org/system/files/2018-02/2018-aha-hospital-fast-facts.pdf). The number we have is notably higher than the AHA report. There are possible causes to the discrepancies: Definition Differences: The AHA defines community hospitals as nonfederal, short-term general, and other special hospitals accessible to the public. If our dataset includes additional categories—such as federal hospitals, specialty hospitals, or facilities not open to the general public—this would increase the total count. In addition, our dataset might encompass facilities beyond those considered community hospitals by the AHA, including certain specialty or non-general acute care hospitals. Lastly, our dataset may contain duplicates, outdated entries, or facilities that were closed or reclassified, leading to an inflated count.
+
+3. Repeat the previous 3 steps with 2017Q4, 2018Q4, and 2019Q4 and then append them together. Plot the number of observations in your dataset by year.
+
+```{python}
+pos_2017 = pd.read_csv("/Users/zhaozijing/Documents/GitHub/problem-set-4-zac-tina/pos2017.csv")
+pos_2018 = pd.read_csv("/Users/zhaozijing/Documents/GitHub/problem-set-4-zac-tina/pos2018.csv", encoding='ISO-8859-1')
+pos_2019 = pd.read_csv("/Users/zhaozijing/Documents/GitHub/problem-set-4-zac-tina/pos2019.csv", encoding='ISO-8859-1')
+
+short_term_2016['Year'] = 2016
+
+short_term_2017 = pos_2017[(pos_2017['PRVDR_CTGRY_CD'] == 1) & (pos_2017['PRVDR_CTGRY_SBTYP_CD'] == 1)]
+short_term_2017['Year'] = 2017
+
+short_term_2018 = pos_2018[(pos_2018['PRVDR_CTGRY_CD'] == 1) & (pos_2018['PRVDR_CTGRY_SBTYP_CD'] == 1)]
+short_term_2018['Year'] = 2018
+
+short_term_2019 = pos_2019[(pos_2019['PRVDR_CTGRY_CD'] == 1) & (pos_2019['PRVDR_CTGRY_SBTYP_CD'] == 1)]
+short_term_2019['Year'] = 2019
+
+# Append the datasets together
+short_term_merge = pd.concat([short_term_2016, short_term_2017, short_term_2018, short_term_2019], ignore_index=True)
+
+# Plot the number of observations by year
+obs_by_year = short_term_merge['Year'].value_counts().sort_index()
+plt.figure(figsize=(8, 5))
+plt.plot(obs_by_year.index, obs_by_year.values, marker='o')
+plt.xlabel('Year')
+plt.ylabel('Number of Observations')
+plt.title('Number of Short-Term Hospital Observations by Year')
+plt.xticks(obs_by_year.index)
+plt.grid(True)
+plt.show()
+```
+
+
+4. Each hospital is identified by its CMS certification number.
+    a. Plot the number of unique hospitals in your dataset per year.
+    b. Compare this to your plot in the previous step. What does this tell you about the structure of the data?
+
+```{python}
+unique_hospitals = short_term_merge.groupby('Year')['PRVDR_NUM'].nunique()
+
+# Plot the number of unique hospitals per year
+plt.figure(figsize=(8, 5))
+plt.plot(unique_hospitals.index, unique_hospitals.values, marker='o', color='orange')
+plt.xlabel('Year')
+plt.ylabel('Number of Unique Hospitals')
+plt.title('Number of Unique Short-Term Hospitals by Year')
+plt.xticks(unique_hospitals.index)
+plt.grid(True)
+plt.show()
+
+```
+
+Comparing this plot to the previous plot of total observations per year, the unique hospital count aligns closely with the overall number of records each year, indicating that each observation generally represents a unique facility rather than multiple entries per hospital. The slight yearly increases suggest either new hospitals opening or previously unlisted hospitals being added to the dataset over time. This points to a stable dataset structure where each entry likely represents an individual hospital's record without significant duplication
 
 ## Identify hospital closures in POS file (15 pts) (*)
 
-1. 
-2. 
-3. 
-    a.
-    b.
-    c.
+1. Use this definition to create a list of all hospitals that were active in 2016 that were suspected to have closed by 2019. Record the facility name and zip of each hospital as well as the year of suspected closure (when they become terminated or disappear from the data). How many hospitals are there that fit this definition?
+
+2. Sort this list of hospitals by name and report the names and year of suspected closure for the first 10 rows.
+
+3. However, not all suspected hospital closures are true closures. For example, in the case of a merger, a CMS certification number will be appear to be “terminated,” but then the hospital re-appear under a similar name/address with a new CMS certifi- cation number in the next year. As a first pass to address this, remove any suspected hospital closures that are in zip codes where the number of active hospitals does not decrease in the year after the suspected closure.
+    a. Among the suspected closures, how many hospitals fit this definition of potentially being a merger/acquisition?
+
+    b.After correcting for this, how many hospitals do you have left?
+
+    c.Sort this list of corrected hospital closures by name and report the first 10 rows.
 
 ## Download Census zip code shapefile (10 pt) 
 
-1. 
-    a.
-    b. 
-2. 
+1. This is non-tabular data. 
+    a. 
+    Shapefile (.shp) contains the geometric information for each shape, such as points, lines, or polygons. This is the core file that stores vector data.
+    Shapefile index (.shx) enables quick access to records in the .shp file. It’s a positional index of the geometry to allow faster searching and loading of data.
+    .dbf file contains attribute data in tabular format for each shape in the .shp file. It stores metadata, such as names, IDs, and other information associated with each shape.
+    .prj is the projection file describes the coordinate system and projection information for the shapefile. This is essential for accurately placing the data on a map.
+    .xml is an optional metadata file that provides additional descriptive information about the dataset, such as creation date, source, and field descriptions.
+
+    b:
+    gz_2010_us_860_00_500k.shp is the largest file at 837.5 MB, as it contains the primary vector data
+    gz_2010_us_860_00_500k.dbf is next in size at 6.4 MB, as it holds the attribute data.
+    gz_2010_us_860_00_500k.shx is smaller, at 265 KB, storing the index.
+    gz_2010_us_860_00_500k.prj 165 bytes and gz_2010_us_860_00_500k.xml 16 KB, are relatively small, since they store text-based projection and metadata.
+
+2. Load the zip code shapefile and restrict to Texas zip codes. (Hint: you can identify which state a zip code is in using the first 2-3 numbers in the zip code (Wikipedia link). Then calculate the number of hospitals per zip code in 2016 based on the cleaned POS file from the previous step. Plot a choropleth of the number of
+hospitals by zip code in Texas.)
+
+```{python}
+zip_codes_gdf = gpd.read_file("/Users/zhaozijing/Documents/GitHub/problem-set-4-zac-tina/gz_2010_us_860_00_500k.shp")
+
+# Filter for Texas zip codes (Texas zip codes start with 75, 76, or 77)
+texas_zip_codes = zip_codes_gdf[zip_codes_gdf['ZCTA5'].str.startswith(('75', '76', '77'))]
+
+# Load the POS data for 2016 and filter to Texas
+pos_2016_texas = short_term_2016.copy()
+pos_2016_texas['ZIP_CD'] = pos_2016_texas['ZIP_CD'].astype(str).str[:5]
+pos_2016_texas = pos_2016_texas[pos_2016_texas['ZIP_CD'].str.startswith(('75', '76', '77'))]
+
+# Calculate the number of hospitals per zip code in Texas for 2016
+hospitals_per_zip = pos_2016_texas.groupby('ZIP_CD').size().reset_index(name='hospital_count')
+
+# Merge hospital counts with the Texas zip codes GeoDataFrame
+texas_zip_codes = texas_zip_codes.rename(columns={'ZCTA5': 'ZIP_CD'})
+texas_zip_codes = texas_zip_codes.merge(hospitals_per_zip, on='ZIP_CD', how='left').fillna(0) 
+
+# Plot a choropleth of the number of hospitals by zip code in Texas
+fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+texas_zip_codes.plot(column='hospital_count', cmap='OrRd', linewidth=0.8, ax=ax, edgecolor='0.8', legend=True)
+ax.set_title("Number of Hospitals by Zip Code in Texas (2016)")
+ax.set_axis_off()
+plt.show()
+```
+
 
 ## Calculate zip code’s distance to the nearest hospital (20 pts) (*)
 
-1. 
-2. 
-3. 
-4. 
-    a.
-    b.
-    c.
-5. 
-    a.
-    b.
-    c.
+1. Create a GeoDataFrame for the centroid of each zip code nationally: zips_all_centroids. What are the dimensions of the resulting GeoDataFrame and what do each of the columns mean?
+
+```{python}
+# Create a GeoDataFrame with the centroids of each zip code
+zips_all_centroids = zip_codes_gdf.copy()
+zips_all_centroids['geometry'] = zips_all_centroids['geometry'].centroid
+
+# Display the dimensions and column names of the resulting GeoDataFrame
+print("Dimensions of zips_all_centroids:", zips_all_centroids.shape)
+print("Column names:", zips_all_centroids.columns)
+
+```
+
+Dimensions: The shape property returns a tuple representing the number of rows (zip codes) and columns.
+Column meanings: 
+ZCTA5 contains the 5-digit ZIP Code 
+geometry: tells us it is a centroid point of the polygen, representing the center of each zip code polygon.
+GEO_ID:
+Name: name of the zip code polygen.
+LSAD
+Censusarea: land area of this census tract
+
+2. Create two GeoDataFrames as subsets of zips_all_centroids. First, create all zip codes in Texas: zips_texas_centroids. Then, create all zip codes in Texas or a bordering state: zips_texas_borderstates_centroids, using the zip code prefixes to make these subsets. How many unique zip codes are in each of these subsets?
+```{python}
+# Filter subsets of zips_all_centroids for Texas and bordering states using zip code prefixes
+
+# Zip code prefixes for Texas and bordering states (Oklahoma, Arkansas, Louisiana, New Mexico)
+texas_prefixes = ('75', '76', '77')
+border_states_prefixes = ('70','71', '72', '73', '74','87', '88') 
+
+# Create the subset for Texas zip codes
+zips_texas_centroids = zips_all_centroids[zips_all_centroids['ZCTA5'].str.startswith(texas_prefixes)]
+
+# Create the subset for Texas and bordering states zip codes
+zips_texas_borderstates_centroids = zips_all_centroids[zips_all_centroids['ZCTA5'].str.startswith(border_states_prefixes)]
+
+# Get the count of unique zip codes in each subset
+num_texas_zips = zips_texas_centroids['ZCTA5'].nunique()
+num_border_states_zips = zips_texas_borderstates_centroids['ZCTA5'].nunique()
+
+print(num_texas_zips)
+print(num_border_states_zips)
+
+```
+
+3. Then create a subset of zips_texas_borderstates_centroids that con- tains only the zip codes with at least 1 hospital in 2016. Call the resulting Geo- DataFrame zips_withhospital_centroids What kind of merge did you decide to do, and what variable are you merging on?
+
+```{python}
+# Filter hospital data for Texas and border states in 2016 and count hospitals by ZIP_CD
+hospitals_2016_texas_border = pos_2016_texas.groupby('ZIP_CD').size().reset_index(name='hospital_count')
+
+# Rename the column in zips_texas_borderstates_centroids to match hospitals_2016_texas_border
+zips_texas_borderstates_centroids = zips_texas_borderstates_centroids.rename(columns={'ZCTA5': 'ZIP_CD'})
+
+# Perform a left merge on ZIP_CD to include only zip codes with at least one hospital
+zips_withhospital_centroids = zips_texas_borderstates_centroids.merge(
+    hospitals_2016_texas_border, on='ZIP_CD', how='left'
+)
+
+# Filter to include only zip codes with at least one hospital
+zips_withhospital_centroids = zips_withhospital_centroids[zips_withhospital_centroids['hospital_count'] > 0]
+
+# Display dimensions of the resulting GeoDataFrame
+zips_withhospital_centroids.shape
+```
+
+4. For each zip code in zips_texas_centroids, calculate the distance to the nearest zip code with at least one hospital in zips_withhospital_centroids.
+    a.This is a computationally-intensive join. Before attempting to do the entire join, subset to 10 zip codes in zips_texas_centroids and try the join. How long did it take? Approximately how long do you estimate the entire procedure will take?
+
+    b.Now try doing the full calculation and time how long it takes. How close is it to your estimation?
+
+    c.Look into the .prj file and report which unit it is in. Convert the given unit to miles, using an appropriate conversion you find online (estimates are okay).
+
+```{python}
+
+```
+
+5. Calculate the average distance to the nearest hospital for each zip code in Texas.
+
+    a.What unit is this in?
+    b. Report the average distance in miles. Does this value make sense?
+    c. Map the value for each zip code.
+
+    ```{python}
+    
+    ```
     
 ## Effects of closures on access in Texas (15 pts)
 
-1. 
-2. 
-3. 
-4. 
+1. Using the corrected hospital closures dataset from the first section, create a list of directly affected zip codes in Texas – that is, those with at least one closure in 2016-2019. Display a table of the number of closures by zipcode
+
+```{python}
+
+```
+
+2. Plot a choropleth of which Texas zip codes were directly affected by a closure in 2016-2019 – there was at least one closure within the zip code. How many directly affected zip codes are there in Texas?
+
+3. Then identify all the indirectly affected zip codes: Texas zip codes within a 10-mile radius of the directly affected zip codes. To do so, first create a GeoDataFrame of the directly affected zip codes. Then create a 10-mile buffer around them. Then, do a spatial join with the overall Texas zip code shapefile. How many indirectly affected zip codes are there in Texas?
+
+4. Make a choropleth plot of the Texas zip codes with a different color for each of the 3 categories: directly affected by a closure, within 10 miles of closure but not directly affected, or not affected.
+
 
 ## Reflecting on the exercise (10 pts) 
+Partner1: The “first-pass” method we’re using to address incorrectly identified clo- sures in the data is imperfect. Can you think of some potential issues that could arise still and ways to do a better job at confirming hospital closures?
+
+Partner2: Consider the way we are identifying zip codes affected by closures. How well does this reflect changes in zip-code-level access to hospitals? Can you think of some ways to improve this measure?
