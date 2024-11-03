@@ -65,7 +65,7 @@ ZIP_CD - ZIP Code
 ```{python}
 pos_2016 = pd.read_csv("/Users/shenzekai/Documents/GitHub/problem-set-4-zac-tina/pos2016.csv")
 
-# Filter the data for short-term hospitals (provider type code 01 and subtype code 01)
+# Filter the data for short-term hospitals
 short_term_2016 = pos_2016[(pos_2016['PRVDR_CTGRY_CD'] == 1) & (pos_2016['PRVDR_CTGRY_SBTYP_CD'] == 1)]
 
 # Count the number of short-term hospitals
@@ -137,7 +137,7 @@ Comparing this plot to the previous plot of total observations per year, the uni
 ```{python}
 import pandas as pd
 
-# Load data for 2016 to 2019 with specified encoding
+# Load data for 2016 to 2019
 pos2016 = pd.read_csv('/Users/shenzekai/Documents/GitHub/problem-set-4-zac-tina/pos2016.csv', encoding='ISO-8859-1')
 pos2017 = pd.read_csv('/Users/shenzekai/Documents/GitHub/problem-set-4-zac-tina/pos2017.csv', encoding='ISO-8859-1')
 pos2018 = pd.read_csv('/Users/shenzekai/Documents/GitHub/problem-set-4-zac-tina/pos2018.csv', encoding='ISO-8859-1')
@@ -187,7 +187,6 @@ sorted_closures = closures.sort_values(by='FAC_NAME')
 
 # Report the names and year of suspected closure for the first 10 rows
 first_10_closures = sorted_closures[['FAC_NAME', 'Year_Closed']].head(10)
-
 
 print("First 10 hospitals suspected to have closed by name and year of closure:")
 print(first_10_closures)
@@ -266,7 +265,7 @@ hospitals by zip code in Texas.)
 
 zip_codes_gdf = gpd.read_file("/Users/shenzekai/Documents/GitHub/problem-set-4-zac-tina/gz_2010_us_860_00_500k.shp")
 
-# Filter for Texas zip codes (Texas zip codes start with 75, 76, or 77)
+# Filter for Texas zip codes
 texas_zip_codes = zip_codes_gdf[zip_codes_gdf['ZCTA5'].str.startswith(('75', '76', '77','78','79'))]
 
 # Load the POS data for 2016 and filter to Texas
@@ -312,13 +311,11 @@ ZCTA5 contains the 5-digit ZIP Code
 geometry: tells us it is a centroid point of the polygen, representing the center of each zip code polygon.
 GEO_ID:
 Name: name of the zip code polygen.
-LSAD
-Censusarea: land area of this census tract
+LSAD：County (ZCTA5)
+Censusarea: land area
 
 2. Create two GeoDataFrames as subsets of zips_all_centroids. First, create all zip codes in Texas: zips_texas_centroids. Then, create all zip codes in Texas or a bordering state: zips_texas_borderstates_centroids, using the zip code prefixes to make these subsets. How many unique zip codes are in each of these subsets?
 ```{python}
-# Filter subsets of zips_all_centroids for Texas and bordering states using zip code prefixes
-
 # Zip code prefixes for Texas and bordering states (Oklahoma, Arkansas, Louisiana, New Mexico)
 texas_prefixes = ('75', '76', '77','78','79')
 border_states_prefixes = ('70','71', '72', '73', '74','75', '76', '77','78','79','87', '88') 
@@ -347,10 +344,8 @@ hospitals_2016 = pos_2016.groupby('ZIP_CD').size().reset_index(name='hospital_co
 hospitals_2016=hospitals_2016[pos2016['PGM_TRMNTN_CD'] == 0]
 hospitals_2016['ZIP_CD'] = hospitals_2016['ZIP_CD'].astype(str).str.split('.').str[0].str.zfill(5)
 
-
 # Rename the column in zips_texas_borderstates_centroids to match hospitals_2016_texas_border
 zips_texas_borderstates_centroids = zips_texas_borderstates_centroids.rename(columns={'ZCTA5': 'ZIP_CD'})
-
 
 # Perform a left merge on ZIP_CD to include only zip codes with at least one hospital
 zips_withhospital_centroids = zips_texas_borderstates_centroids.merge(
@@ -374,9 +369,7 @@ subset_zips_texas_centroids = zips_texas_centroids.head(10)
 
 # Function to find the nearest point and calculate the distance
 def calculate_nearest(row, other_gdf, point_column='geometry', other_point_column='geometry'):
-    # Find the nearest point in the other GeoDataFrame
     nearest_geom = nearest_points(row[point_column], other_gdf.unary_union)[1]
-    # Calculate the distance to the nearest point
     distance = row[point_column].distance(nearest_geom)
     return distance
 
@@ -399,7 +392,6 @@ print(f'The estimate time for calculating the entire dataset is {(subset_time_ta
 ```{python}
 # Measure the time taken for the full calculation
 start_time = time.time()
-
 # Apply the function to calculate the distance for the entire dataset
 zips_texas_centroids['nearest_hospital_distance'] = zips_texas_centroids.apply(
     calculate_nearest, other_gdf=zips_withhospital_centroids, axis=1
@@ -522,8 +514,6 @@ buffered = directly_affected_gdf.buffer(buffer_distance)
 buffered_gdf = gpd.GeoDataFrame(geometry=buffered)
 buffered_gdf.crs = directly_affected_gdf.crs
 
-
-
 # Perform a spatial join with the overall Texas zip code shapefile
 indirectly_affected_gdf = gpd.sjoin(texas_zip_closure, buffered_gdf, how='inner', predicate='intersects')
 
@@ -549,7 +539,7 @@ texas_zip_closure.loc[texas_zip_closure['ZIP_CD'].isin(indirectly_affected_gdf['
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 texas_zip_closure.plot(column='category', ax=ax, legend=True,
                         legend_kwds={'title': "Zip Code Categories"},
-                        cmap='Set1')  # 'Set1' colormap for distinct colors
+                        cmap='Set1')
 plt.title("Texas Zip Codes Affected by Hospital Closures (2016-2019)")
 plt.show()
 ```
